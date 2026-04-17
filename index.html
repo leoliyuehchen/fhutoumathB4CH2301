@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>機率九宮格互動教學系統</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }, svg: { fontCache: 'global' } };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    /* --- 佈局與排版 --- */
+    html, body { height: 100%; margin: 0; overflow: hidden; font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #fff7ed 0%, #fef08a 100%); }
+    #app-container { display: flex; flex-direction: column; height: 100%; }
+
+    #header-bar { flex: 0 0 auto; background: #ea580c; color: white; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 20; }
+    #problem-select { background: white; color: #ea580c; border: none; padding: 4px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; outline: none; }
+
+    @media (min-width: 768px) {
+      #main-content { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
+      #left-panel, #right-panel { flex: 1; height: 100%; overflow-y: auto; }
+      #left-panel { border-right: 2px solid #fdba74; box-shadow: 4px 0 15px rgba(0,0,0,0.05); z-index: 10; background: rgba(255,255,255,0.7); backdrop-filter: blur(5px); }
+    }
+    @media (max-width: 767px) {
+      #main-content { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+      #left-panel { flex: 0 0 auto; max-height: 50vh; overflow-y: auto; border-bottom: 2px solid #fdba74; background: rgba(255,255,255,0.95); z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.05);}
+      #right-panel { flex: 1 1 auto; overflow-y: auto; padding-bottom: 80px;}
+    }
+
+    /* --- 九宮格 --- */
+    .grid-container { display: grid; border: 3px solid #1f2937; margin: 1rem auto; background: white; position: relative; }
+    .grid-3x3 { grid-template-columns: minmax(60px, 1fr) minmax(80px, 1fr) minmax(80px, 1fr); }
+    .grid-4x3 { grid-template-columns: minmax(60px, 1fr) minmax(60px, 1fr) minmax(60px, 1fr) minmax(60px, 1fr); }
+    
+    .cell {
+      border: 1px solid #d1d5db; position: relative; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 0.5rem 0.25rem; min-height: 65px;
+      transition: all 0.3s; font-size: 1rem; font-weight: 600; text-align: center; line-height: 1.2;
+    }
+    
+    .border-b-thick { border-bottom: 3px solid #1f2937; }
+    .border-r-thick { border-right: 3px solid #1f2937; }
+
+    .cell-u { background-color: #ef4444; color: white; }
+    .cell-label { background-color: #fed7aa; color: #9a3412; font-size: 0.85rem; }
+    .cell-core { background-color: #fef3c7; color: #111827; }
+
+    .cell.focus-glow { box-shadow: inset 0 0 0 3px #3b82f6; background-color: #dbeafe; transform: scale(0.98); }
+    .cell.highlight-auto { background-color: #fbd38d !important; transform: scale(1.05); z-index: 5;}
+    
+    .sub-ratio {
+      position: absolute; bottom: 2px; right: 4px; font-size: 0.65rem; color: #ea580c; font-weight: bold;
+      opacity: 0; transition: opacity 0.5s;
+    }
+
+    .math-symbol {
+      position: absolute; font-size: 1.25rem; font-weight: 900; color: #b91c1c;
+      background: rgba(255,255,255,0.9); border-radius: 50%; width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2); transform: translate(-50%, -50%); z-index: 20;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    .math-symbol.rotate { transform: translate(-50%, -50%) rotate(90deg); }
+    @keyframes popIn { 0% { transform: scale(0) translate(-50%, -50%); opacity: 0; } 100% { transform: scale(1) translate(-50%, -50%); opacity: 1; } }
+
+    /* --- 右側互動卡片 --- */
+    .step-card {
+      background: white; border-radius: 12px; padding: 16px; margin-bottom: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-left: 4px solid #f97316;
+      opacity: 0; transform: translateY(10px); animation: slideUp 0.4s ease-out forwards;
+    }
+    @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+    .step-card.done { opacity: 0.6; pointer-events: none; border-color: #d1d5db; border-left-width: 1px;}
+
+    .tap-input {
+      width: 100%; height: 48px; font-size: 1.125rem; text-align: center;
+      border: 2px solid #e5e7eb; border-radius: 8px; outline: none; transition: all 0.2s;
+    }
+    .tap-input:focus { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2); }
+    .tap-input.error { border-color: #ef4444; background-color: #fef2f2; animation: shake 0.3s; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+    /* 觀察按鈕區 */
+    .obs-panel { display: none; flex-direction: column; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #d1d5db; }
+    .obs-btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .obs-btn { font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: #f9fafb; cursor: pointer; font-weight: bold; transition: 0.2s;}
+    .obs-btn:hover { background: #e5e7eb; }
+    .obs-btn.active { box-shadow: inset 0 0 0 2px #1f2937; }
+  </style>
+</head>
+<body>
+
+  <script>
+    let audioCtx;
+    function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    function playSound(type) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      if (type === 'correct') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(659.25, audioCtx.currentTime); osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+      } else {
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+      }
+    }
+  </script>
+
+  <div id="app-container">
+    <div id="header-bar">
+      <div class="font-bold">機率與期望值</div>
+      <select id="problem-select" onchange="loadProblem(this.value)">
+        <option value="random">🎲 隨機抽題</option>
+        <option value="自評2" selected>自我評量2 (色盲 / 二維)</option>
+        <option value="S2">S2 (戴眼鏡 / 二維)</option>
+        <option value="T2">T2 (機器 / 類九宮格)</option>
+      </select>
+    </div>
+
+    <div id="main-content">
+      <div id="left-panel" class="p-4 sm:p-6 flex flex-col">
+        <div class="bg-orange-100 text-orange-800 p-2 rounded text-sm mb-3 shadow-sm font-bold flex items-center">
+          <span class="mr-2">💡</span> 提示：全事件的機率為 1，即 $P(U)=1$。
+        </div>
+        
+        <div id="problemArea" class="text-gray-800 text-base leading-relaxed mb-4 bg-white p-4 rounded-lg shadow-sm border border-orange-100"></div>
+
+        <div id="gridArea" class="w-full relative"></div>
+        
+        <div id="ruleArea" class="mt-2 text-xs text-center text-gray-600 font-bold bg-white p-2 rounded border border-gray-200"></div>
+
+        <div id="obsArea" class="obs-panel mt-6 bg-white p-3 rounded-lg shadow-inner">
+          <div class="w-full text-sm font-bold text-gray-700 flex justify-between items-center mb-1" id="obs-title">
+            <span>🔍 四重視角</span>
+            <button onclick="clearObs()" class="text-xs text-blue-500 hover:text-blue-700 underline bg-transparent border-none cursor-pointer">清除</button>
+          </div>
+          <div class="obs-btn-group" id="obs-btn-container"></div>
+        </div>
+      </div>
+
+      <div id="right-panel" class="p-4 sm:p-6">
+        <div id="stepsContainer">
+           <div class="flex flex-col items-center justify-center h-full pt-10">
+              <button onclick="startGame()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition active:scale-95 text-lg">
+                ▶ 點此開始解析
+              </button>
+           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PROBLEMS = {
+      "S2": {
+        title: "二維九宮格 (S2 變形)", cols: 3,
+        gen: () => {
+          let pM = Math.floor(Math.random()*4+3)*10;
+          let pF = 100 - pM;
+          let gM = Math.floor(Math.random()*4+4)*10;
+          let gF = Math.floor(Math.random()*3+3)*10;
+          return {
+            text: `某校男生佔 $${pM}\\%$、女生佔 $${pF}\\%$。其中男生有 $${gM}\\%$ 戴眼鏡、女生有 $${gF}\\%$ 戴眼鏡。若自學生中任意抽取1人，求此人戴眼鏡的機率。`,
+            labels: { top: ["男生", "女生"], left: ["戴眼鏡", "沒戴眼鏡"] },
+            val: { top: [pM/100, pF/100], sub1: [gM/100, gF/100], sub2: [1-(gM/100), 1-(gF/100)] },
+            missingTop: false // 已給定男生、女生，不需計算
+          };
+        }
+      },
+      "自評2": {
+        title: "二維九宮格 (自我評量2 變形)", cols: 3,
+        gen: () => {
+          let pM = Math.floor(Math.random()*3+4)*10;
+          let pF = 100 - pM;
+          let cM = Math.floor(Math.random()*5+2);
+          let cF = Math.floor(Math.random()*3+1);
+          return {
+            text: `某國中 $${cM}\\%$ 的男學生有色盲，$${cF}\\%$ 的女學生有色盲。已知全校有 $${pM}\\%$ 是男學生，則從全校學生中任意選取 1 人有色盲的機率為何？`,
+            labels: { top: ["男學生", "女學生"], left: ["有色盲", "無色盲"] },
+            val: { top: [pM/100, pF/100], sub1: [cM/100, cF/100], sub2: [1-(cM/100), 1-(cF/100)] },
+            missingTop: true // 僅給定男學生，需計算女學生
+          };
+        }
+      },
+      "T2": {
+        title: "類九宮格 (T2 變形)", cols: 4,
+        gen: () => {
+          let pA = Math.floor(Math.random()*3+4)*10;
+          let pB = Math.floor(Math.random()*2+2)*10;
+          let pC = 100 - pA - pB;
+          let eA = Math.floor(Math.random()*3+1);
+          let eB = Math.floor(Math.random()*3+2);
+          let eC = Math.floor(Math.random()*3+3);
+          return {
+            text: `某工廠有 A, B, C 三部機器，分別生產全部產品的 $${pA}\\%, ${pB}\\%, ${pC}\\%$。設 A, B, C 生產的不良率分別為 $${eA}\\%, ${eB}\\%, ${eC}\\%$。若任選一產品，此產品為不良品的機率為何？`,
+            labels: { top: ["A機器", "B機器", "C機器"], left: ["不良品", "優良品"] },
+            val: { top: [pA/100, pB/100, pC/100], sub1: [eA/100, eB/100, eC/100], sub2: [1-(eA/100), 1-(eB/100), 1-(eC/100)] },
+            missingTop: false // 已給定A,B,C三機，不需計算
+          };
+        }
+      }
+    };
+
+    let currentProb = null; let probData = null;
+
+    function loadProblem(type) {
+      if (type === 'random') {
+        const keys = Object.keys(PROBLEMS);
+        type = keys[Math.floor(Math.random() * keys.length)];
+      }
+      currentProb = PROBLEMS[type]; probData = currentProb.gen();
+      
+      document.getElementById('problemArea').innerHTML = `<div class="font-bold text-orange-600 mb-2">${currentProb.title}</div><p>${probData.text}</p>`;
+      document.getElementById('ruleArea').innerText = currentProb.cols === 3 ? "二維九宮格：<<運算規則>> 每列：左 = 中 + 右，每欄：上 = 中 + 下" : "類九宮格：<<運算規則>> 每列：左 = 第二欄 + 第三欄 + 第四欄，每欄：上 = 中 + 下";
+      document.getElementById('stepsContainer').innerHTML = `<div class="flex flex-col items-center justify-center h-full pt-10"><button onclick="startGame()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition active:scale-95 text-lg">▶ 點此開始解析</button></div>`;
+      document.getElementById('gridArea').innerHTML = "";
+      document.getElementById('obsArea').style.display = 'none';
+      if(window.MathJax) MathJax.typesetPromise();
+    }
+
+    function initGrid() {
+      const g = document.getElementById('gridArea');
+      let c = currentProb.cols; let l = probData.labels;
+      let html = `<div id="math-layer" class="absolute inset-0 pointer-events-none"></div><div class="grid-container grid-${c}x3" id="theGrid">`;
+      html += `<div class="cell cell-u border-r-thick border-b-thick" id="c-U">總計<div id="v-U" class="opacity-0 mt-1 font-mono text-xl"></div></div>`;
+      for(let i=0; i<c-1; i++) html += `<div class="cell cell-label border-b-thick" id="c-T${i}">${l.top[i]}<div id="v-T${i}" class="opacity-0 mt-1 font-mono text-lg text-black"></div></div>`;
+      html += `<div class="cell cell-label border-r-thick" id="c-L0">${l.left[0]}<div id="v-L0" class="opacity-0 mt-1 font-mono text-lg text-black"></div></div>`;
+      for(let i=0; i<c-1; i++) html += `<div class="cell cell-core" id="c-C0${i}"><div id="v-C0${i}" class="opacity-0 font-mono text-lg text-blue-700"></div><div id="s-C0${i}" class="sub-ratio"></div></div>`;
+      html += `<div class="cell cell-label border-r-thick" id="c-L1">${l.left[1]}<div id="v-L1" class="opacity-0 mt-1 font-mono text-lg text-black"></div></div>`;
+      for(let i=0; i<c-1; i++) html += `<div class="cell cell-core" id="c-C1${i}"><div id="v-C1${i}" class="opacity-0 font-mono text-lg text-blue-700"></div><div id="s-C1${i}" class="sub-ratio"></div></div>`;
+      html += `</div>`; g.innerHTML = html;
+    }
+
+    function startGame() { initAudio(); initGrid(); document.getElementById('stepsContainer').innerHTML = ""; step1AutoFill(); }
+
+    function addInfoCard(title, content="") {
+      let div = document.createElement('div'); div.className = "step-card bg-orange-50 text-orange-800";
+      div.innerHTML = `<p class="font-bold">${title}</p><div class="text-sm mt-1">${content}</div>`;
+      document.getElementById('stepsContainer').appendChild(div); scrollToBottom();
+    }
+
+    async function step1AutoFill() {
+      let msg = probData.missingTop ? "自動填入總數 $1$、第一個頂部比例，以及各事件的已知子比例。<br><span class='text-xs text-orange-600'>※ 缺少的分類比例留給您計算。</span>" : "自動填入總數 $1$、所有頂部分類比例，以及各事件的已知子比例。";
+      addInfoCard("步驟一：自動填入已知條件", msg);
+      
+      const setVal = (id, val, isSub=false) => {
+        let el = document.getElementById(id); if(!el) return;
+        el.innerText = val; el.style.opacity = 1;
+        el.parentElement.classList.add('highlight-auto');
+        setTimeout(() => el.parentElement.classList.remove('highlight-auto'), 500);
+      };
+
+      await new Promise(r=>setTimeout(r, 800)); setVal('v-U', '1');
+      let c = currentProb.cols - 1;
+      
+      // 動態判斷要填入幾個 top 比例
+      let topCountToFill = probData.missingTop ? c - 1 : c;
+      for(let i=0; i<topCountToFill; i++) { await new Promise(r=>setTimeout(r, 800)); setVal(`v-T${i}`, probData.val.top[i]); }
+      // 填入所有上半部子比例
+      for(let i=0; i<c; i++) { await new Promise(r=>setTimeout(r, 800)); setVal(`s-C0${i}`, probData.val.sub1[i], true); }
+      
+      await new Promise(r=>setTimeout(r, 600)); step2Interactive();
+    }
+
+    let actSteps = []; let curIdx = 0;
+
+    function renderNext() {
+      if (curIdx >= actSteps.length) {
+        if(actSteps[0] && (actSteps[0].id.includes('top') || actSteps[0].id.includes('sub2'))) step3Interactive();
+        else finishGame();
+        return;
+      }
+      let s = actSteps[curIdx]; let div = document.createElement('div');
+      div.className = "step-card"; div.id = `card-${curIdx}`;
+      let cleanAns = parseFloat(s.ans.toFixed(5));
+
+      div.innerHTML = `
+        <div class="font-bold text-gray-800 mb-1">${s.title}</div>
+        <div class="text-sm text-gray-600 mb-2">${s.desc}</div>
+        <div class="flex gap-2 items-center">
+          <input type="number" id="inp-${s.id}" class="tap-input flex-1" placeholder="輸入小數" step="0.001">
+          <button onclick="checkAns(${cleanAns}, '${s.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-blue-700">檢查</button>
+        </div>
+        <div id="msg-${s.id}" class="text-sm font-bold mt-2 h-6 flex justify-between items-center text-red-600">
+          <span class="msg-text"></span>
+          <button onclick="showHint(${curIdx})" class="hidden hint-btn text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">看圖解提示</button>
+        </div>
+        <div class="hint-math hidden mt-2 text-sm text-gray-800 bg-orange-50 p-2 rounded border border-orange-200 text-center font-bold">${s.hint}</div>
+      `;
+      document.getElementById('stepsContainer').appendChild(div); if(window.MathJax) MathJax.typesetPromise();
+      let inp = document.getElementById(`inp-${s.id}`); inp.focus();
+      inp.addEventListener('focus', () => { clearGlow(); document.getElementById(s.targetId).classList.add('focus-glow'); });
+      inp.addEventListener('blur', clearGlow); inp.addEventListener('keydown', (e) => { if(e.key === 'Enter') checkAns(cleanAns, s.id); });
+      scrollToBottom();
+    }
+
+    window.checkAns = function(correctVal, id) {
+      let inp = document.getElementById(`inp-${id}`); let userVal = parseFloat(inp.value);
+      if (Math.abs(userVal - correctVal) < 0.0001) {
+        playSound('correct'); inp.disabled = true; inp.style.borderColor = "#22c55e"; inp.style.backgroundColor = "#f0fdf4";
+        document.querySelector(`#msg-${id} .msg-text`).innerHTML = `<span class="text-green-700">✓ 正確！</span>`;
+        let displayEl = document.getElementById(actSteps[curIdx].displayId); displayEl.innerText = correctVal; displayEl.style.opacity = 1; clearOverlays();
+        document.getElementById(`card-${curIdx}`).classList.add('done'); curIdx++; setTimeout(renderNext, 300);
+      } else {
+        playSound('wrong'); inp.classList.add('error');
+        document.querySelector(`#msg-${id} .msg-text`).innerText = "✗ 不對喔，再算一次！";
+        document.querySelector(`#msg-${id} .hint-btn`).classList.remove('hidden'); setTimeout(() => inp.classList.remove('error'), 300);
+      }
+    }
+
+    window.showHint = function(idx) {
+      document.getElementById(`card-${idx}`).querySelector('.hint-math').classList.remove('hidden');
+      if (actSteps[idx].draw) actSteps[idx].draw();
+    }
+
+    function step2Interactive() {
+      addInfoCard("步驟二：計算頂部剩餘比例與互補的右下角比例"); actSteps = [];
+      let c = currentProb.cols - 1; let tops = probData.labels.top; let lastIdx = c - 1;
+      
+      // 若有缺少的頂部比例才加入求頂部比例的題目
+      if (probData.missingTop) {
+        let knownTops = Array.from({length: lastIdx}, (_, i) => probData.val.top[i]).join(' - ');
+        actSteps.push({
+          id: `top-${lastIdx}`, targetId: `c-T${lastIdx}`, displayId: `v-T${lastIdx}`,
+          title: `求【${tops[lastIdx]}】比例`, desc: `全校(1) 扣除已知的頂部比例`, ans: probData.val.top[lastIdx],
+          hint: `$1 - ${knownTops} = ${parseFloat(probData.val.top[lastIdx].toFixed(4))}$`,
+          draw: () => { clearOverlays(); drawSym('=', 'c-U', `c-T${lastIdx-1}`, false); drawSym('+', `c-T${lastIdx-1}`, `c-T${lastIdx}`, false); }
+        });
+      }
+
+      for(let i=0; i<c; i++) {
+        actSteps.push({
+          id: `sub2-${i}`, targetId: `c-C1${i}`, displayId: `s-C1${i}`,
+          title: `求【${tops[i]}】的【${probData.labels.left[1]}】右下角比例`, desc: `全部(1) 扣除上面的右下角比例`, ans: probData.val.sub2[i],
+          hint: `$1 - ${probData.val.sub1[i]} = ${parseFloat(probData.val.sub2[i].toFixed(4))}$<br><span class="text-xs text-gray-500">注意垂直 + 與轉向 =</span>`,
+          draw: () => { clearOverlays(); drawSym('=', `c-T${i}`, `c-C0${i}`, true); drawSym('+', `c-C0${i}`, `c-C1${i}`, true); }
+        });
+      }
+      curIdx = 0; renderNext();
+    }
+
+    function step3Interactive() {
+      addInfoCard("步驟三：計算核心區實際機率，再加總求列總計"); actSteps = [];
+      let c = currentProb.cols - 1; let tops = probData.labels.top; let lefts = probData.labels.left;
+      
+      let sumTop = 0;
+      for(let i=0; i<c; i++) {
+        let val = probData.val.top[i] * probData.val.sub1[i]; sumTop += val;
+        actSteps.push({
+          id: `core0-${i}`, targetId: `c-C0${i}`, displayId: `v-C0${i}`,
+          title: `核心區：【${tops[i]}】且【${lefts[0]}】`, desc: `相乘：頂部比例 × 右下角比例`, ans: val,
+          hint: `$${probData.val.top[i]} \\times ${probData.val.sub1[i]} = ${parseFloat(val.toFixed(5))}$`
+        });
+      }
+      actSteps.push({
+        id: `sum0`, targetId: `c-L0`, displayId: `v-L0`,
+        title: `★ 本題所求：總計【${lefts[0]}】機率`, desc: `左 = ${c===2 ? '中 + 右' : '第二欄 + 第三欄 + 第四欄'}`, ans: sumTop,
+        hint: `橫向核心區相加`,
+        draw: () => { clearOverlays(); drawSym('=', 'c-L0', 'c-C00', false); for(let i=0; i<c-1; i++) drawSym('+', `c-C0${i}`, `c-C0${i+1}`, false); }
+      });
+
+      let sumBot = 0;
+      for(let i=0; i<c; i++) {
+        let val = probData.val.top[i] * probData.val.sub2[i]; sumBot += val;
+        let valCoreTop = probData.val.top[i] * probData.val.sub1[i];
+        actSteps.push({
+          id: `core1-${i}`, targetId: `c-C1${i}`, displayId: `v-C1${i}`,
+          title: `核心區：【${tops[i]}】且【${lefts[1]}】`, 
+          desc: `上=中+下，或相乘：頂部比例 × 右下角比例`, ans: val,
+          hint: `(減法) $${probData.val.top[i]} - ${parseFloat(valCoreTop.toFixed(5))} = ${parseFloat(val.toFixed(5))}$<br>(乘法) $${probData.val.top[i]} \\times ${parseFloat(probData.val.sub2[i].toFixed(4))} = ${parseFloat(val.toFixed(5))}$`,
+          draw: () => { clearOverlays(); drawSym('=', `c-T${i}`, `c-C0${i}`, true); drawSym('+', `c-C0${i}`, `c-C1${i}`, true); }
+        });
+      }
+      actSteps.push({
+        id: `sum1`, targetId: `c-L1`, displayId: `v-L1`,
+        title: `總計【${lefts[1]}】機率`, 
+        desc: `左 = ${c===2 ? '中 + 右' : '第二欄 + 第三欄 + 第四欄'}，或 上 = 中 + 下`, ans: sumBot,
+        hint: `(減法) $1 - ${parseFloat(sumTop.toFixed(5))} = ${parseFloat(sumBot.toFixed(5))}$<br>(加法) 將橫向核心區相加`,
+        draw: () => { clearOverlays(); drawSym('=', 'c-U', 'c-L0', true); drawSym('+', 'c-L0', 'c-L1', true); }
+      });
+
+      curIdx = 0; renderNext();
+    }
+
+    function finishGame() {
+      let finalAns = actSteps.find(s => s.id === 'sum0').ans; let div = document.createElement('div');
+      div.className = "step-card bg-green-50 text-green-800 border-l-4 border-green-500 mb-6";
+      div.innerHTML = `<p class="font-bold text-lg mb-1">🎉 解答完成！</p><p>所求機率為：<strong class="text-xl">${parseFloat(finalAns.toFixed(5))}</strong></p><p class="text-sm mt-2 text-green-700">您可以點擊左側「觀察儀表板」按鈕，體驗集合的視覺化拆解，或由最上方選單進行下一題。</p>`;
+      document.getElementById('stepsContainer').appendChild(div); renderObs(); scrollToBottom();
+    }
+
+    function drawSym(sym, id1, id2, isVert) {
+      let layer = document.getElementById('math-layer'); let grid = document.getElementById('theGrid').getBoundingClientRect();
+      let r1 = document.getElementById(id1).getBoundingClientRect(); let r2 = document.getElementById(id2).getBoundingClientRect();
+      let el = document.createElement('div'); el.className = `math-symbol ${isVert && sym==='=' ? 'rotate' : ''}`; el.innerText = sym;
+      if (isVert) { el.style.left = `${((r1.left + r1.right)/2 - grid.left) / grid.width * 100}%`; el.style.top = `${((r1.bottom + r2.top)/2 - grid.top) / grid.height * 100}%`; } 
+      else { el.style.left = `${((r1.right + r2.left)/2 - grid.left) / grid.width * 100}%`; el.style.top = `${((r1.top + r1.bottom)/2 - grid.top) / grid.height * 100}%`; }
+      layer.appendChild(el);
+    }
+
+    function clearOverlays() { document.getElementById('math-layer').innerHTML = ''; }
+    function clearGlow() { document.querySelectorAll('.cell').forEach(c => c.classList.remove('focus-glow')); }
+    function scrollToBottom() { let r = document.getElementById('right-panel'); r.scrollTo({ top: r.scrollHeight, behavior: 'smooth' }); }
+
+    function renderObs() {
+      const p = document.getElementById('obsArea'); p.style.display = 'flex'; const cont = document.getElementById('obs-btn-container');
+      let tops = probData.labels.top; let lefts = probData.labels.left;
+      let html = `<button class="obs-btn" onclick="obs(1)">(1) 總計 U</button>`;
+      if (currentProb.cols === 3) {
+        html += `<button class="obs-btn" onclick="obs(2)">(2) ${tops[0]} + ${tops[1]}</button>
+                 <button class="obs-btn" onclick="obs(3)">(3) ${lefts[0]} + ${lefts[1]}</button>
+                 <button class="obs-btn" onclick="obs(4)">(4) 核心四格</button>`;
+      } else {
+        html += `<button class="obs-btn" onclick="obs(2)">(2) ${tops[0]} + ${tops[1]} + ${tops[2]}</button>
+                 <button class="obs-btn" onclick="obs(3)">(3) ${lefts[0]} + ${lefts[1]}</button>
+                 <button class="obs-btn" onclick="obs(4)">(4) 核心六格</button>`;
+      }
+      cont.innerHTML = html;
+    }
+
+    window.clearObs = function() { 
+      document.querySelectorAll('.cell').forEach(c => { 
+        c.style.backgroundColor = ''; c.style.color = ''; 
+        // 確保內部文字顏色也恢復原狀
+        let innerText = c.querySelector('div[id^="v-"]');
+        if (innerText) innerText.style.color = '';
+        let innerSub = c.querySelector('.sub-ratio');
+        if (innerSub) innerSub.style.color = '';
+      }); 
+      document.querySelectorAll('.obs-btn').forEach(b => b.classList.remove('active')); 
+    }
+
+    window.obs = function(mode) {
+      clearObs(); event.target.classList.add('active');
+      const applyCol = (ids, bg) => ids.forEach(id => { 
+        let el = document.getElementById(id); 
+        if(el) { 
+          el.style.backgroundColor = bg; el.style.color = 'white'; 
+          // 強制內部數值顏色變為白色以維持對比度
+          let innerText = el.querySelector('div[id^="v-"]');
+          if (innerText) innerText.style.color = 'white';
+          let innerSub = el.querySelector('.sub-ratio');
+          if (innerSub) innerSub.style.color = 'white';
+        } 
+      });
+      
+      let c = currentProb.cols - 1;
+      if (mode === 1) { applyCol(['c-U'], '#a855f7'); }
+      else if (mode === 2) { applyCol(['c-U'], '#a855f7'); let arr = []; for(let i=0; i<c; i++) arr.push(`c-T${i}`); applyCol(arr, '#22c55e'); } 
+      else if (mode === 3) { applyCol(['c-U'], '#a855f7'); applyCol(['c-L0', 'c-L1'], '#f97316'); } 
+      else if (mode === 4) { applyCol(['c-U'], '#a855f7'); let arr = []; for(let i=0; i<c; i++) { arr.push(`c-C0${i}`); arr.push(`c-C1${i}`); } applyCol(arr, '#3b82f6'); }
+    }
+
+    window.onload = () => { loadProblem(document.getElementById('problem-select').value); };
+  </script>
+</body>
+</html>
