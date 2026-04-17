@@ -17,8 +17,8 @@
     #app-container { display: flex; flex-direction: column; height: 100%; }
 
     #header-bar { flex: 0 0 auto; background: #ea580c; color: white; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 20; }
-    #problem-select { background: white; color: #ea580c; border: none; padding: 4px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; outline: none; }
-    .reload-btn { background: #fff7ed; color: #ea580c; border: none; padding: 4px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; outline: none; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    #problem-select { background: white; color: #ea580c; border: none; padding: 4px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; outline: none; font-size: 1rem;}
+    .reload-btn { background: #fff7ed; color: #ea580c; border: none; padding: 4px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; outline: none; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); font-size: 1rem;}
     .reload-btn:hover { background: #ffffff; transform: translateY(-1px); }
 
     @media (min-width: 768px) {
@@ -34,33 +34,33 @@
 
     /* --- 九宮格 --- */
     .grid-container { display: grid; border: 3px solid #1f2937; margin: 1rem auto; background: white; position: relative; }
-    .grid-3x3 { grid-template-columns: minmax(60px, 1fr) minmax(80px, 1fr) minmax(80px, 1fr); }
-    .grid-4x3 { grid-template-columns: minmax(60px, 1fr) minmax(60px, 1fr) minmax(60px, 1fr) minmax(60px, 1fr); }
+    .grid-3x3 { grid-template-columns: minmax(70px, 1fr) minmax(90px, 1fr) minmax(90px, 1fr); }
+    .grid-4x3 { grid-template-columns: minmax(70px, 1fr) minmax(75px, 1fr) minmax(75px, 1fr) minmax(75px, 1fr); }
     
     .cell {
       border: 1px solid #d1d5db; position: relative; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; padding: 0.5rem 0.25rem; min-height: 65px;
-      transition: all 0.3s; font-size: 1rem; font-weight: 600; text-align: center; line-height: 1.2;
+      align-items: center; justify-content: center; padding: 0.75rem 0.25rem; min-height: 80px;
+      transition: all 0.3s; font-size: 1.15rem; font-weight: 600; text-align: center; line-height: 1.2;
     }
     
     .border-b-thick { border-bottom: 3px solid #1f2937; }
     .border-r-thick { border-right: 3px solid #1f2937; }
 
-    .cell-u { background-color: #ef4444; color: white; }
-    .cell-label { background-color: #fed7aa; color: #9a3412; font-size: 0.85rem; }
+    .cell-u { background-color: #ef4444; color: white; font-size: 1.25rem;}
+    .cell-label { background-color: #fed7aa; color: #9a3412; font-size: 1.05rem; }
     .cell-core { background-color: #fef3c7; color: #111827; }
 
     .cell.focus-glow { box-shadow: inset 0 0 0 3px #3b82f6; background-color: #dbeafe; transform: scale(0.98); }
     .cell.highlight-auto { background-color: #fbd38d !important; transform: scale(1.05); z-index: 5;}
     
     .sub-ratio {
-      position: absolute; bottom: 2px; right: 4px; font-size: 0.65rem; color: #ea580c; font-weight: bold;
+      position: absolute; bottom: 3px; right: 6px; font-size: 0.85rem; color: #ea580c; font-weight: bold;
       opacity: 0; transition: opacity 0.5s;
     }
 
     .math-symbol {
-      position: absolute; font-size: 1.25rem; font-weight: 900; color: #b91c1c;
-      background: rgba(255,255,255,0.9); border-radius: 50%; width: 24px; height: 24px;
+      position: absolute; font-size: 1.5rem; font-weight: 900; color: #b91c1c;
+      background: rgba(255,255,255,0.9); border-radius: 50%; width: 28px; height: 28px;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 0 5px rgba(0,0,0,0.2); transform: translate(-50%, -50%); z-index: 20;
       animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
@@ -88,7 +88,7 @@
     /* 觀察按鈕區 */
     .obs-panel { display: none; flex-direction: column; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #d1d5db; }
     .obs-btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
-    .obs-btn { font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; opacity: 0.85; }
+    .obs-btn { font-size: 0.9rem; padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; opacity: 0.85; }
     .obs-btn:hover { opacity: 1; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     .obs-btn.active { opacity: 1; box-shadow: inset 0 0 0 3px #111827; }
   </style>
@@ -151,12 +151,12 @@
 
         <div id="gridArea" class="w-full relative"></div>
         
-        <div id="ruleArea" class="mt-2 text-xs text-center text-gray-600 font-bold bg-white p-2 rounded border border-gray-200"></div>
+        <div id="ruleArea" class="mt-2 text-sm text-center text-gray-600 font-bold bg-white p-2 rounded border border-gray-200"></div>
 
         <div id="obsArea" class="obs-panel mt-6 bg-white p-3 rounded-lg shadow-inner">
-          <div class="w-full text-sm font-bold text-gray-700 flex justify-between items-center mb-1" id="obs-title">
+          <div class="w-full text-base font-bold text-gray-700 flex justify-between items-center mb-1" id="obs-title">
             <span>🔍 四重視角</span>
-            <button onclick="clearObs()" class="text-xs text-blue-500 hover:text-blue-700 underline bg-transparent border-none cursor-pointer">清除</button>
+            <button onclick="clearObs()" class="text-sm text-blue-500 hover:text-blue-700 underline bg-transparent border-none cursor-pointer">清除</button>
           </div>
           <div class="obs-btn-group" id="obs-btn-container"></div>
         </div>
@@ -252,12 +252,12 @@
       const g = document.getElementById('gridArea');
       let c = currentProb.cols; let l = probData.labels;
       let html = `<div id="math-layer" class="absolute inset-0 pointer-events-none"></div><div class="grid-container grid-${c}x3" id="theGrid">`;
-      html += `<div class="cell cell-u border-r-thick border-b-thick" id="c-U">總計<div id="v-U" class="opacity-0 mt-1 font-mono text-xl"></div></div>`;
-      for(let i=0; i<c-1; i++) html += `<div class="cell cell-label border-b-thick" id="c-T${i}">${l.top[i]}<div id="v-T${i}" class="opacity-0 mt-1 font-mono text-lg text-black"></div></div>`;
-      html += `<div class="cell cell-label border-r-thick" id="c-L0">${l.left[0]}<div id="v-L0" class="opacity-0 mt-1 font-mono text-lg text-black"></div></div>`;
-      for(let i=0; i<c-1; i++) html += `<div class="cell cell-core" id="c-C0${i}"><div id="v-C0${i}" class="opacity-0 font-mono text-lg text-blue-700"></div><div id="s-C0${i}" class="sub-ratio"></div></div>`;
-      html += `<div class="cell cell-label border-r-thick" id="c-L1">${l.left[1]}<div id="v-L1" class="opacity-0 mt-1 font-mono text-lg text-black"></div></div>`;
-      for(let i=0; i<c-1; i++) html += `<div class="cell cell-core" id="c-C1${i}"><div id="v-C1${i}" class="opacity-0 font-mono text-lg text-blue-700"></div><div id="s-C1${i}" class="sub-ratio"></div></div>`;
+      html += `<div class="cell cell-u border-r-thick border-b-thick" id="c-U">總計<div id="v-U" class="opacity-0 mt-1 font-mono text-2xl"></div></div>`;
+      for(let i=0; i<c-1; i++) html += `<div class="cell cell-label border-b-thick" id="c-T${i}">${l.top[i]}<div id="v-T${i}" class="opacity-0 mt-1 font-mono text-xl text-black"></div></div>`;
+      html += `<div class="cell cell-label border-r-thick" id="c-L0">${l.left[0]}<div id="v-L0" class="opacity-0 mt-1 font-mono text-xl text-black"></div></div>`;
+      for(let i=0; i<c-1; i++) html += `<div class="cell cell-core" id="c-C0${i}"><div id="v-C0${i}" class="opacity-0 font-mono text-xl text-blue-700"></div><div id="s-C0${i}" class="sub-ratio"></div></div>`;
+      html += `<div class="cell cell-label border-r-thick" id="c-L1">${l.left[1]}<div id="v-L1" class="opacity-0 mt-1 font-mono text-xl text-black"></div></div>`;
+      for(let i=0; i<c-1; i++) html += `<div class="cell cell-core" id="c-C1${i}"><div id="v-C1${i}" class="opacity-0 font-mono text-xl text-blue-700"></div><div id="s-C1${i}" class="sub-ratio"></div></div>`;
       html += `</div>`; g.innerHTML = html;
     }
 
@@ -265,12 +265,12 @@
 
     function addInfoCard(title, content="") {
       let div = document.createElement('div'); div.className = "step-card bg-orange-50 text-orange-800";
-      div.innerHTML = `<p class="font-bold">${title}</p><div class="text-sm mt-1">${content}</div>`;
+      div.innerHTML = `<p class="font-bold text-lg">${title}</p><div class="text-base mt-1">${content}</div>`;
       document.getElementById('stepsContainer').appendChild(div); scrollToBottom();
     }
 
     async function step1AutoFill() {
-      let msg = probData.missingTop ? "自動填入總數 $1$、第一個頂部比例，以及各事件的已知角比例。<br><span class='text-xs text-orange-600'>※ 缺少的分類比例留給您計算。</span>" : "自動填入總數 $1$、所有頂部分類比例，以及各事件的已知角比例。";
+      let msg = probData.missingTop ? "自動填入總數 $1$、第一個頂部比例，以及各事件的已知角比例。<br><span class='text-sm text-orange-600'>※ 缺少的分類比例留給您計算。</span>" : "自動填入總數 $1$、所有頂部分類比例，以及各事件的已知角比例。";
       addInfoCard("步驟一：自動填入已知條件", msg);
       
       const setVal = (id, val, isSub=false) => {
@@ -303,17 +303,17 @@
       let cleanAns = parseFloat(s.ans.toFixed(5));
 
       div.innerHTML = `
-        <div class="font-bold text-gray-800 mb-1">${s.title}</div>
-        <div class="text-sm text-gray-600 mb-2">${s.desc}</div>
+        <div class="font-bold text-gray-800 mb-1 text-lg">${s.title}</div>
+        <div class="text-base text-gray-600 mb-3">${s.desc}</div>
         <div class="flex gap-2 items-center">
           <input type="number" id="inp-${s.id}" class="tap-input flex-1" placeholder="輸入小數" step="0.001">
-          <button onclick="checkAns(${cleanAns}, '${s.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow hover:bg-blue-700">檢查</button>
+          <button onclick="checkAns(${cleanAns}, '${s.id}')" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-bold shadow hover:bg-blue-700 text-lg">檢查</button>
         </div>
-        <div id="msg-${s.id}" class="text-sm font-bold mt-2 h-6 flex justify-between items-center text-red-600">
+        <div id="msg-${s.id}" class="text-base font-bold mt-2 h-6 flex justify-between items-center text-red-600">
           <span class="msg-text"></span>
-          <button onclick="showHint(${curIdx})" class="hidden hint-btn text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">看圖解提示</button>
+          <button onclick="showHint(${curIdx})" class="hidden hint-btn text-sm bg-orange-100 text-orange-800 px-3 py-1 rounded">看圖解提示</button>
         </div>
-        <div class="hint-math hidden mt-2 text-sm text-gray-800 bg-orange-50 p-2 rounded border border-orange-200 text-center font-bold">${s.hint}</div>
+        <div class="hint-math hidden mt-2 text-base text-gray-800 bg-orange-50 p-3 rounded border border-orange-200 text-center font-bold">${s.hint}</div>
       `;
       document.getElementById('stepsContainer').appendChild(div); if(window.MathJax) MathJax.typesetPromise();
       let inp = document.getElementById(`inp-${s.id}`); inp.focus();
@@ -359,7 +359,7 @@
         actSteps.push({
           id: `sub2-${i}`, targetId: `c-C1${i}`, displayId: `s-C1${i}`,
           title: `求【${tops[i]}】的【${probData.labels.left[1]}】右下角比例`, desc: `全部(1) 扣除上面的右下角比例`, ans: probData.val.sub2[i],
-          hint: `$1 - ${probData.val.sub1[i]} = ${parseFloat(probData.val.sub2[i].toFixed(4))}$<br><span class="text-xs text-gray-500">注意垂直 + 與轉向 =</span>`,
+          hint: `$1 - ${probData.val.sub1[i]} = ${parseFloat(probData.val.sub2[i].toFixed(4))}$<br><span class="text-sm text-gray-500">注意垂直 + 與轉向 =</span>`,
           draw: () => { clearOverlays(); drawSym('=', `c-T${i}`, `c-C0${i}`, true); drawSym('+', `c-C0${i}`, `c-C1${i}`, true); }
         });
       }
@@ -413,10 +413,10 @@
       let finalAns = actSteps.find(s => s.id === 'sum0').ans; let div = document.createElement('div');
       div.className = "step-card bg-green-50 text-green-800 border-l-4 border-green-500 mb-6 flex flex-col";
       div.innerHTML = `
-        <p class="font-bold text-lg mb-1">🎉 解答完成！</p>
-        <p>所求機率為：<strong class="text-xl">${parseFloat(finalAns.toFixed(5))}</strong></p>
-        <p class="text-sm mt-2 text-green-700">您可以點擊左側「觀察儀表板」按鈕，體驗集合的視覺化拆解。</p>
-        <button onclick="reloadCurrentProblem()" class="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition self-center text-sm">
+        <p class="font-bold text-xl mb-1">🎉 解答完成！</p>
+        <p class="text-lg">所求機率為：<strong class="text-2xl text-green-900">${parseFloat(finalAns.toFixed(5))}</strong></p>
+        <p class="text-base mt-2 text-green-700">您可以點擊左側「觀察儀表板」按鈕，體驗集合的視覺化拆解。</p>
+        <button onclick="reloadCurrentProblem()" class="mt-5 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition self-center text-lg">
           🔄 再練一題
         </button>
       `;
