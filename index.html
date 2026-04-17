@@ -18,6 +18,8 @@
 
     #header-bar { flex: 0 0 auto; background: #ea580c; color: white; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 20; }
     #problem-select { background: white; color: #ea580c; border: none; padding: 4px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; outline: none; }
+    .reload-btn { background: #fff7ed; color: #ea580c; border: none; padding: 4px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; outline: none; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    .reload-btn:hover { background: #ffffff; transform: translateY(-1px); }
 
     @media (min-width: 768px) {
       #main-content { display: flex; flex-direction: row; flex: 1; overflow: hidden; }
@@ -115,12 +117,15 @@
   <div id="app-container">
     <div id="header-bar">
       <div class="font-bold text-xl tracking-wider">機率的分割</div>
-      <select id="problem-select" onchange="loadProblem(this.value)">
-        <option value="random">🎲 隨機抽題</option>
-        <option value="自評2" selected>自我評量2 (色盲 / 二維)</option>
-        <option value="S2">S2 (戴眼鏡 / 二維)</option>
-        <option value="T2">T2 (機器 / 類九宮格)</option>
-      </select>
+      <div class="flex gap-2 items-center">
+        <button onclick="reloadCurrentProblem()" class="reload-btn">🔄 重新練習</button>
+        <select id="problem-select" onchange="loadProblem(this.value)">
+          <option value="random">🎲 隨機抽題</option>
+          <option value="自評2" selected>自我評量2 (色盲 / 二維)</option>
+          <option value="S2">S2 (戴眼鏡 / 二維)</option>
+          <option value="T2">T2 (機器 / 類九宮格)</option>
+        </select>
+      </div>
     </div>
 
     <div id="main-content">
@@ -221,6 +226,12 @@
     };
 
     let currentProb = null; let probData = null;
+
+    // 重新練習按鈕呼叫此函式
+    function reloadCurrentProblem() {
+      let currentSelect = document.getElementById('problem-select').value;
+      loadProblem(currentSelect);
+    }
 
     function loadProblem(type) {
       if (type === 'random') {
@@ -400,8 +411,15 @@
 
     function finishGame() {
       let finalAns = actSteps.find(s => s.id === 'sum0').ans; let div = document.createElement('div');
-      div.className = "step-card bg-green-50 text-green-800 border-l-4 border-green-500 mb-6";
-      div.innerHTML = `<p class="font-bold text-lg mb-1">🎉 解答完成！</p><p>所求機率為：<strong class="text-xl">${parseFloat(finalAns.toFixed(5))}</strong></p><p class="text-sm mt-2 text-green-700">您可以點擊左側「觀察儀表板」按鈕，體驗集合的視覺化拆解，或由最上方選單進行下一題。</p>`;
+      div.className = "step-card bg-green-50 text-green-800 border-l-4 border-green-500 mb-6 flex flex-col";
+      div.innerHTML = `
+        <p class="font-bold text-lg mb-1">🎉 解答完成！</p>
+        <p>所求機率為：<strong class="text-xl">${parseFloat(finalAns.toFixed(5))}</strong></p>
+        <p class="text-sm mt-2 text-green-700">您可以點擊左側「觀察儀表板」按鈕，體驗集合的視覺化拆解。</p>
+        <button onclick="reloadCurrentProblem()" class="mt-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition self-center text-sm">
+          🔄 再練一題
+        </button>
+      `;
       document.getElementById('stepsContainer').appendChild(div); renderObs(); scrollToBottom();
     }
 
