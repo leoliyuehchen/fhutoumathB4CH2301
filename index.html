@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>貝氏定理九宮格互動教學系統</title>
+  <title>機率的分割九宮格互動教學系統</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -114,7 +114,7 @@
 
   <div id="app-container">
     <div id="header-bar">
-      <div class="font-bold text-xl tracking-wider">貝氏定理</div>
+      <div class="font-bold text-xl tracking-wider">機率的分割</div>
       <select id="problem-select" onchange="loadProblem(this.value)">
         <option value="random">🎲 隨機抽題</option>
         <option value="自評2" selected>自我評量2 (色盲 / 二維)</option>
@@ -125,6 +125,19 @@
 
     <div id="main-content">
       <div id="left-panel" class="p-4 sm:p-6 flex flex-col">
+        
+        <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-900 p-3 rounded-lg mb-4 shadow-sm text-sm leading-relaxed">
+          <div class="font-bold text-base mb-1">📖 重點概念：機率的分割</div>
+          <ul class="list-disc list-inside space-y-1">
+            <li><strong>分割的定義：</strong>樣本空間 $S$ 被切分成多個互斥且聯集為 $S$ 的事件（對應表格上方的分類，如 $A, B, C$）。</li>
+            <li><strong>機率的分割：</strong>要求目標事件（如左側的 $G$）發生的總機率，等於將它在各個分割區內發生的機率相加。<br>
+            公式：$P(G) = P(A \cap G) + P(B \cap G) + \dots$</li>
+          </ul>
+          <div class="mt-2 text-blue-700 font-bold bg-blue-100 p-2 rounded">
+            👉 這正是九宮格表中「左邊總和 = 橫向核心區相加」的數學原理！
+          </div>
+        </div>
+
         <div class="bg-orange-100 text-orange-800 p-2 rounded text-sm mb-3 shadow-sm font-bold flex items-center">
           <span class="mr-2">💡</span> 提示：全事件的機率為 1，即 $P(U)=1$。
         </div>
@@ -409,7 +422,6 @@
       const p = document.getElementById('obsArea'); p.style.display = 'flex'; const cont = document.getElementById('obs-btn-container');
       let tops = probData.labels.top; let lefts = probData.labels.left;
       
-      // 使用 style 屬性直接綁定您要求的四個顏色 (1)紫 (2)綠 (3)橘 (4)藍
       let html = `<button class="obs-btn text-white" style="background-color: #a855f7;" onclick="obs(1)">(1) 總計 U</button>`;
       
       if (currentProb.cols === 3) {
