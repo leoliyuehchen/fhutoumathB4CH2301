@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>機率九宮格互動教學系統</title>
+  <title>貝氏定理九宮格互動教學系統</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -86,9 +86,9 @@
     /* 觀察按鈕區 */
     .obs-panel { display: none; flex-direction: column; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #d1d5db; }
     .obs-btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
-    .obs-btn { font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; border: 1px solid #d1d5db; background: #f9fafb; cursor: pointer; font-weight: bold; transition: 0.2s;}
-    .obs-btn:hover { background: #e5e7eb; }
-    .obs-btn.active { box-shadow: inset 0 0 0 2px #1f2937; }
+    .obs-btn { font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; opacity: 0.85; }
+    .obs-btn:hover { opacity: 1; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .obs-btn.active { opacity: 1; box-shadow: inset 0 0 0 3px #111827; }
   </style>
 </head>
 <body>
@@ -114,7 +114,7 @@
 
   <div id="app-container">
     <div id="header-bar">
-      <div class="font-bold">機率與期望值</div>
+      <div class="font-bold text-xl tracking-wider">貝氏定理</div>
       <select id="problem-select" onchange="loadProblem(this.value)">
         <option value="random">🎲 隨機抽題</option>
         <option value="自評2" selected>自我評量2 (色盲 / 二維)</option>
@@ -169,7 +169,7 @@
             text: `某校男生佔 $${pM}\\%$、女生佔 $${pF}\\%$。其中男生有 $${gM}\\%$ 戴眼鏡、女生有 $${gF}\\%$ 戴眼鏡。若自學生中任意抽取1人，求此人戴眼鏡的機率。`,
             labels: { top: ["男生", "女生"], left: ["戴眼鏡", "沒戴眼鏡"] },
             val: { top: [pM/100, pF/100], sub1: [gM/100, gF/100], sub2: [1-(gM/100), 1-(gF/100)] },
-            missingTop: false // 已給定男生、女生，不需計算
+            missingTop: false 
           };
         }
       },
@@ -184,7 +184,7 @@
             text: `某國中 $${cM}\\%$ 的男學生有色盲，$${cF}\\%$ 的女學生有色盲。已知全校有 $${pM}\\%$ 是男學生，則從全校學生中任意選取 1 人有色盲的機率為何？`,
             labels: { top: ["男學生", "女學生"], left: ["有色盲", "無色盲"] },
             val: { top: [pM/100, pF/100], sub1: [cM/100, cF/100], sub2: [1-(cM/100), 1-(cF/100)] },
-            missingTop: true // 僅給定男學生，需計算女學生
+            missingTop: true 
           };
         }
       },
@@ -201,7 +201,7 @@
             text: `某工廠有 A, B, C 三部機器，分別生產全部產品的 $${pA}\\%, ${pB}\\%, ${pC}\\%$。設 A, B, C 生產的不良率分別為 $${eA}\\%, ${eB}\\%, ${eC}\\%$。若任選一產品，此產品為不良品的機率為何？`,
             labels: { top: ["A機器", "B機器", "C機器"], left: ["不良品", "優良品"] },
             val: { top: [pA/100, pB/100, pC/100], sub1: [eA/100, eB/100, eC/100], sub2: [1-(eA/100), 1-(eB/100), 1-(eC/100)] },
-            missingTop: false // 已給定A,B,C三機，不需計算
+            missingTop: false 
           };
         }
       }
@@ -246,7 +246,7 @@
     }
 
     async function step1AutoFill() {
-      let msg = probData.missingTop ? "自動填入總數 $1$、第一個頂部比例，以及各事件的已知子比例。<br><span class='text-xs text-orange-600'>※ 缺少的分類比例留給您計算。</span>" : "自動填入總數 $1$、所有頂部分類比例，以及各事件的已知子比例。";
+      let msg = probData.missingTop ? "自動填入總數 $1$、第一個頂部比例，以及各事件的已知角比例。<br><span class='text-xs text-orange-600'>※ 缺少的分類比例留給您計算。</span>" : "自動填入總數 $1$、所有頂部分類比例，以及各事件的已知角比例。";
       addInfoCard("步驟一：自動填入已知條件", msg);
       
       const setVal = (id, val, isSub=false) => {
@@ -259,10 +259,8 @@
       await new Promise(r=>setTimeout(r, 800)); setVal('v-U', '1');
       let c = currentProb.cols - 1;
       
-      // 動態判斷要填入幾個 top 比例
       let topCountToFill = probData.missingTop ? c - 1 : c;
       for(let i=0; i<topCountToFill; i++) { await new Promise(r=>setTimeout(r, 800)); setVal(`v-T${i}`, probData.val.top[i]); }
-      // 填入所有上半部子比例
       for(let i=0; i<c; i++) { await new Promise(r=>setTimeout(r, 800)); setVal(`s-C0${i}`, probData.val.sub1[i], true); }
       
       await new Promise(r=>setTimeout(r, 600)); step2Interactive();
@@ -323,7 +321,6 @@
       addInfoCard("步驟二：計算頂部剩餘比例與互補的右下角比例"); actSteps = [];
       let c = currentProb.cols - 1; let tops = probData.labels.top; let lastIdx = c - 1;
       
-      // 若有缺少的頂部比例才加入求頂部比例的題目
       if (probData.missingTop) {
         let knownTops = Array.from({length: lastIdx}, (_, i) => probData.val.top[i]).join(' - ');
         actSteps.push({
@@ -411,15 +408,18 @@
     function renderObs() {
       const p = document.getElementById('obsArea'); p.style.display = 'flex'; const cont = document.getElementById('obs-btn-container');
       let tops = probData.labels.top; let lefts = probData.labels.left;
-      let html = `<button class="obs-btn" onclick="obs(1)">(1) 總計 U</button>`;
+      
+      // 使用 style 屬性直接綁定您要求的四個顏色 (1)紫 (2)綠 (3)橘 (4)藍
+      let html = `<button class="obs-btn text-white" style="background-color: #a855f7;" onclick="obs(1)">(1) 總計 U</button>`;
+      
       if (currentProb.cols === 3) {
-        html += `<button class="obs-btn" onclick="obs(2)">(2) ${tops[0]} + ${tops[1]}</button>
-                 <button class="obs-btn" onclick="obs(3)">(3) ${lefts[0]} + ${lefts[1]}</button>
-                 <button class="obs-btn" onclick="obs(4)">(4) 核心四格</button>`;
+        html += `<button class="obs-btn text-white" style="background-color: #22c55e;" onclick="obs(2)">(2) ${tops[0]} + ${tops[1]}</button>
+                 <button class="obs-btn text-white" style="background-color: #f97316;" onclick="obs(3)">(3) ${lefts[0]} + ${lefts[1]}</button>
+                 <button class="obs-btn text-white" style="background-color: #3b82f6;" onclick="obs(4)">(4) 核心四格</button>`;
       } else {
-        html += `<button class="obs-btn" onclick="obs(2)">(2) ${tops[0]} + ${tops[1]} + ${tops[2]}</button>
-                 <button class="obs-btn" onclick="obs(3)">(3) ${lefts[0]} + ${lefts[1]}</button>
-                 <button class="obs-btn" onclick="obs(4)">(4) 核心六格</button>`;
+        html += `<button class="obs-btn text-white" style="background-color: #22c55e;" onclick="obs(2)">(2) ${tops[0]} + ${tops[1]} + ${tops[2]}</button>
+                 <button class="obs-btn text-white" style="background-color: #f97316;" onclick="obs(3)">(3) ${lefts[0]} + ${lefts[1]}</button>
+                 <button class="obs-btn text-white" style="background-color: #3b82f6;" onclick="obs(4)">(4) 核心六格</button>`;
       }
       cont.innerHTML = html;
     }
@@ -427,7 +427,6 @@
     window.clearObs = function() { 
       document.querySelectorAll('.cell').forEach(c => { 
         c.style.backgroundColor = ''; c.style.color = ''; 
-        // 確保內部文字顏色也恢復原狀
         let innerText = c.querySelector('div[id^="v-"]');
         if (innerText) innerText.style.color = '';
         let innerSub = c.querySelector('.sub-ratio');
@@ -442,7 +441,6 @@
         let el = document.getElementById(id); 
         if(el) { 
           el.style.backgroundColor = bg; el.style.color = 'white'; 
-          // 強制內部數值顏色變為白色以維持對比度
           let innerText = el.querySelector('div[id^="v-"]');
           if (innerText) innerText.style.color = 'white';
           let innerSub = el.querySelector('.sub-ratio');
